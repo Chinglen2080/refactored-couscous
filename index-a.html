@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Automatic Denial System for Vehicle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fbff;
+      color: #333;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #005fa3;
+      color: white;
+      text-align: center;
+      padding: 1.5em 0;
+    }
+    section {
+      max-width: 800px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      color: #005fa3;
+      border-bottom: 2px solid #005fa3;
+      padding-bottom: 5px;
+    }
+    ul {
+      list-style-type: disc;
+      padding-left: 25px;
+    }
+    .speaker {
+      font-style: italic;
+      color: #444;
+      margin-top: 10px;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #005fa3;
+      color: white;
+      margin-top: 30px;
+    }
+    /* Visual Block for demonstration */
+    .demo-area {
+      margin-top: 30px;
+      text-align: center;
+    }
+    .servo-base {
+      width: 150px;
+      height: 20px;
+      background: #333;
+      margin: 0 auto;
+      position: relative;
+      border-radius: 5px;
+    }
+    .servo-arm {
+      width: 10px;
+      height: 80px;
+      background: #666;
+      position: absolute;
+      left: 50%;
+      bottom: 20px;
+      transform-origin: bottom center;
+      transform: rotate(0deg);
+      transition: transform 1s ease-in-out;
+      border-radius: 3px;
+    }
+    .barrier {
+      width: 120px;
+      height: 30px;
+      background: #f5a623;
+      margin: 15px auto 0;
+      border-radius: 4px;
+      transform-origin: bottom center;
+      transition: transform 1s ease-in-out;
+      transform: rotate(0deg);
+      box-shadow: 0 0 4px 2px #f5a62388;
+    }
+    /* LED styles */
+    .led {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      margin: 0 5px;
+      box-shadow: 0 0 8px #00000055;
+      opacity: 0.3;
+      transition: opacity 0.3s;
+      vertical-align: middle;
+    }
+    .led.on {
+      opacity: 1;
+      box-shadow: 0 0 12px #fff;
+    }
+    .led.orange {
+      background: orange;
+      box-shadow: 0 0 8px orange;
+    }
+    .led.red {
+      background: red;
+      box-shadow: 0 0 8px red;
+    }
+    .led.blue {
+      background: blue;
+      box-shadow: 0 0 8px blue;
+    }
+    .led.colorful {
+      background: linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet);
+      box-shadow: 0 0 12px #888;
+      opacity: 1 !important;
+    }
+    /* Buzzer icon */
+    .buzzer {
+      margin-top: 15px;
+      font-weight: bold;
+      font-family: monospace;
+      color: darkred;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .buzzer.on {
+      opacity: 1;
+      animation: buzz 0.5s infinite alternate;
+    }
+    @keyframes buzz {
+      0% { color: darkred; }
+      100% { color: red; }
+    }
+    /* Buttons */
+    .controls {
+      margin: 30px 0 10px;
+      text-align: center;
+    }
+    button {
+      background: #005fa3;
+      border: none;
+      color: white;
+      padding: 10px 20px;
+      margin: 0 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #004574;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Automatic Denial System for Vehicle</h1>
+    <p>Arduino Project Presentation</p>
+  </header>
+
+  <section>
+    <h2>Introduction</h2>
+    <p>Good morning everyone. We are presenting our project — <strong>Automatic Denial System for Vehicle</strong>.</p>
+    <p>This project helps stop unauthorized vehicles automatically using sensors and a servo motor.</p>
+
+    <h2>Components Used</h2>
+    <ul>
+      <li><strong>Arduino Uno</strong> – The brain of the project.</li>
+      <li><strong>Two Ultrasonic Sensors</strong> – Detect objects at 20 cm and 15 cm distances.</li>
+      <li><strong>Servo Motor</strong> – Lifts and lowers the road barrier.</li>
+      <li><strong>Buzzer</strong> – Produces a siren sound in emergencies.</li>
+      <li><strong>Orange, Red, and Blue LEDs</strong> – Flash like a police siren when an enemy vehicle is detected.</li>
+      <li><strong>Colorful LED</strong> – Glows when the system is ON and safe.</li>
+      <li><strong>Switch</strong> – Turns the system ON or OFF.</li>
+      <li><strong>Jumper Wires, Breadboard, and 9V Battery</strong> – Provide power and connections.</li>
+    </ul>
+
+    <p>All components are connected to the Arduino Uno on a cardboard base.</p>
+
+    <p class="speaker">🎙️ Lenard (1:00 – 2:00 minute)</p>
+    <h2>Working of the Project</h2>
+    <p>When the switch is turned ON and no object is detected, the colorful LED glows, indicating readiness.</p>
+    <p>When Sensor 1 detects an object within 20 cm, the servo moves 45°, slightly lifting the thermocol road. The orange LED and buzzer turn ON for 8 seconds, showing that a vehicle is approaching.</p>
+    <p>If the object comes closer (within 15 cm), Sensor 2 activates. The servo then moves 70°, raising the barrier fully. The red and blue LEDs flash alternately, and the buzzer produces an emergency sound.</p>
+    <p>After 8 seconds, if no object remains, all components turn OFF automatically, and the road barrier returns to its original position.</p>
+
+    <p class="speaker">🎙️ Chinglen (2:00 – 3:00 minute)</p>
+    <h2>Mechanical Setup & Real-Life Use</h2>
+    <p>The road is made of thermocol attached to the servo motor horn using glue. The servo is fixed on one side of the base; its rotation lifts the thermocol road just like a real gate. At 45°, it slightly lifts for checking; at 70°, it completely blocks the way.</p>
+    <p>This system can be used in army camps, toll gates, and security checkpoints to automatically detect and stop vehicles without human effort. The buzzer and lights act as warning indicators, ensuring safety and efficiency.</p>
+
+    <h2>Simulation</h2>
+    <div class="demo-area">
+      <div class="servo-base">
+        <div class="servo-arm" id="servoArm"></div>
+      </div>
+      <div class="barrier" id="barrier"></div>
+      <div style="margin-top:15px;">
+        <span class="led colorful on" id="ledColorful" title="System ON: Safe"></span>
+        <span class="led orange" id="ledOrange" title="Warning"></span>
+        <span class="led red" id="ledRed" title="Alarm"></span>
+        <span class="led blue" id="ledBlue" title="Alarm"></span>
+      </div>
+      <div class="buzzer" id="buzzer">🚨 BUZZER SOUND 🚨</div>
+    </div>
+
+    <div class="controls">
+      <button id="btnPower">Turn System ON</button>
+      <button id="btnSensor1" disabled>Detect Vehicle (20 cm)</button>
+      <button id="btnSensor2" disabled>Vehicle Closer (15 cm)</button>
+      <button id="btnReset" disabled>Reset</button>
+    </div>
+
+  </section>
+
+  <footer>
+    <p>Presented by Lenard & Chinglen | Class 8 Project</p>
+  </footer>
+
+  <script>
+    const btnPower = document.getElementById('btnPower');
+    const btnSensor1 = document.getElementById('btnSensor1');
+    const btnSensor2 = document.getElementById('btnSensor2');
+    const btnReset = document.getElementById('btnReset');
+
+    const servoArm = document.getElementById('servoArm');
+    const barrier = document.getElementById('barrier');
+
+    const ledColorful = document.getElementById('ledColorful');
+    const ledOrange = document.getElementById('ledOrange');
+    const ledRed = document.getElementById('ledRed');
+    const ledBlue = document.getElementById('ledBlue');
+
+    const buzzer = document.getElementById('buzzer');
+
+    let systemOn = false;
+    let timeoutId = null;
+    let alarmInterval = null;
+
+    function resetSystem() {
+      systemOn = false;
+      btnPower.textContent = 'Turn System ON';
+      btnSensor1.disabled = true;
+      btnSensor2.disabled = true;
+      btnReset.disabled = true;
+
+      servoArm.style.transform = 'rotate(0deg)';
+      barrier.style.transform = 'rotate(0deg)';
+
+      ledColorful.classList.add('on');
+      ledOrange.classList.remove('on');
+      ledRed.classList.remove('on');
+      ledBlue.classList.remove('on');
+
+      buzzer.classList.remove('on');
+      clearInterval(alarmInterval);
+      clearTimeout(timeoutId);
+    }
+
+    function startFlashingAlarm() {
+      let onRed = true;
+      alarmInterval = setInterval(() => {
+        if (onRed) {
+          ledRed.classList.add('on');
+          ledBlue.classList.remove('on');
+        } else {
+          ledRed.classList.remove('on');
+          ledBlue.classList.add('on');
+        }
+        onRed = !onRed;
+      }, 400);
+      buzzer.classList.add('on');
+    }
+
+    function stopFlashingAlarm() {
+      clearInterval(alarmInterval);
+      ledRed.classList.remove('on');
+      ledBlue.classList.remove('on');
+      buzzer.classList.remove('on');
+    }
+
+    btnPower.addEventListener('click', () => {
+      if (!systemOn) {
+        systemOn = true;
+        btnPower.textContent = 'Turn System OFF';
+        btnSensor1.disabled = false;
+        btnSensor2.disabled = true;
+        btnReset.disabled = true;
+
+        ledColorful.classList.add('on');
+      } else {
+        resetSystem();
+      }
+    });
+
+    btnSensor1.addEventListener('click', () => {
+      if (!systemOn) return;
+
+      ledColorful.classList.remove('on');
+      ledOrange.classList.add('on');
+      buzzer.classList.add('on');
+
+      servoArm.style.transform = 'rotate(45deg)';
+      barrier.style.transform = 'rotate(12deg)';
+
+      btnSensor1.disabled = true;
+      btnSensor2.disabled = false;
+      btnReset.disabled = true;
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        if (btnSensor2.disabled) {
+          ledOrange.classList.remove('on');
+          buzzer.classList.remove('on');
+          servoArm.style.transform = 'rotate(0deg)';
+          barrier.style.transform = 'rotate(0deg)';
+          ledColorful.classList.add('on');
+          btnSensor1.disabled = false;
+          btnSensor2.disabled = true;
+          btnReset.disabled = false;
+        }
+      }, 8000);
+    });
+
+    btnSensor2.addEventListener('click', () => {
+      if (!systemOn) return;
+
+      ledOrange.classList.remove('on');
+      ledRed.classList.add('on');
+      buzzer.classList.add('on');
+
+      startFlashingAlarm();
+
+      servoArm.style.transform = 'rotate(70deg)';
+      barrier.style.transform = 'rotate(28deg)';
+
+      btnSensor1.disabled = true;
+      btnSensor2.disabled = true;
+      btnReset.disabled = false;
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        stopFlashingAlarm();
+        buzzer.classList.remove('on');
+        ledRed.classList.remove('on');
+        ledBlue.classList.remove('on');
+        servoArm.style.transform = 'rotate(0deg)';
+        barrier.style.transform = 'rotate(0deg)';
+        ledColorful.classList.add('on');
+
+        btnSensor1.disabled = false;
+        btnSensor2.disabled = true;
+        btnReset.disabled = true;
+      }, 8000);
+    });
+
+    btnReset.addEventListener('click', () => {
+      ledOrange.classList.remove('on');
+      buzzer.classList.remove('on');
+      servoArm.style.transform = 'rotate(0deg)';
+      barrier.style.transform = 'rotate(0deg)';
+      ledColorful.classList.add('on');
+
+      btnSensor1.disabled = false;
+      btnSensor2.disabled = true;
+      btnReset.disabled = true;
+    });
+
+    resetSystem();
+  </script>
+
+</body>
+</html>
