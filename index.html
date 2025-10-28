@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Automatic Denial System for Vehicle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8fbff;
+      color: #333;
+      line-height: 1.6;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #005fa3;
+      color: white;
+      text-align: center;
+      padding: 1.5em 0;
+    }
+    section {
+      max-width: 800px;
+      margin: 20px auto;
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      color: #005fa3;
+      border-bottom: 2px solid #005fa3;
+      padding-bottom: 5px;
+    }
+    ul {
+      list-style-type: disc;
+      padding-left: 25px;
+    }
+    .speaker {
+      font-style: italic;
+      color: #444;
+      margin-top: 10px;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      background: #005fa3;
+      color: white;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Automatic Denial System for Vehicle</h1>
+    <p>Arduino Project Presentation</p>
+  </header>
+
+  <section>
+    <h2>Introduction</h2>
+    <p>Good morning everyone. We are presenting our project — <strong>Automatic Denial System for Vehicle</strong>.</p>
+    <p>This project helps stop unauthorized vehicles automatically using sensors and a servo motor.</p>
+
+    <h2>Components Used</h2>
+    <ul>
+      <li><strong>Arduino Uno</strong> – The brain of the project.</li>
+      <li><strong>Two Ultrasonic Sensors</strong> – Detect objects at 20 cm and 15 cm distances.</li>
+      <li><strong>Servo Motor</strong> – Lifts and lowers the road barrier.</li>
+      <li><strong>Buzzer</strong> – Produces a siren sound in emergencies.</li>
+      <li><strong>Orange, Red, and Blue LEDs</strong> – Flash like a police siren when an enemy vehicle is detected.</li>
+      <li><strong>Colorful LED</strong> – Glows when the system is ON and safe.</li>
+      <li><strong>Switch</strong> – Turns the system ON or OFF.</li>
+      <li><strong>Jumper Wires, Breadboard, and 9V Battery</strong> – Provide power and connections.</li>
+    </ul>
+
+    <p>All components are connected to the Arduino Uno on a cardboard base.</p>
+
+    <p class="speaker">🎙️ Lenard (1:00 – 2:00 minute)</p>
+    <h2>Working of the Project</h2>
+    <p>When the switch is turned ON and no object is detected, the colorful LED glows, indicating readiness.</p>
+    <p>When Sensor 1 detects an object within 20 cm, the servo moves 45°, slightly lifting the thermocol road. The orange LED and buzzer turn ON for 8 seconds, showing that a vehicle is approaching.</p>
+    <p>If the object comes closer (within 15 cm), Sensor 2 activates. The servo then moves 70°, raising the barrier fully. The red and blue LEDs flash alternately, and the buzzer produces an emergency sound.</p>
+    <p>After 8 seconds, if no object remains, all components turn OFF automatically, and the road barrier returns to its original position.</p>
+
+    <p class="speaker">🎙️ Chinglen (2:00 – 3:00 minute)</p>
+    <h2>Mechanical Setup & Real-Life Use</h2>
+    <p>The road is made of thermocol attached to the servo motor horn using glue. The servo is fixed on one side of the base; its rotation lifts the thermocol road just like a real gate. At 45°, it slightly lifts for checking; at 70°, it completely blocks the way.</p>
+    <p>This system can be used in army camps, toll gates, and security checkpoints to automatically detect and stop vehicles without human effort. The buzzer and lights act as warning indicators, ensuring safety and efficiency.</p>
+
+    <h2>Conclusion</h2>
+    <p>Thank you!</p>
+  </section>
+
+  <footer>
+    <p>Presented by Lenard, Chinglen and Ansh | Class 8 Project</p>
+    <a herf="index-a.html">V2</a>
+  </footer>
+
+</body>
+</html>
