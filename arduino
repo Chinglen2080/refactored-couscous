@@ -1,0 +1,144 @@
+const int trig1 = 9, echo1 = 8;
+const int trig2 = 7, echo2 = 6;
+const int servoPin = 10;
+const int switchPin = 5;
+
+const int orangeLED = 4;
+const int redLED = 3;
+const int blueLED = 2;
+const int buzzer = 11;
+const int colorLED = 12;
+
+bool systemOn = false;
+unsigned long actionEndTime = 0;  // for 8-second hold
+int activeSensor = 0;             // 1 or 2
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(trig1, OUTPUT);
+  pinMode(echo1, INPUT);
+  pinMode(trig2, OUTPUT);
+  pinMode(echo2, INPUT);
+  pinMode(switchPin, INPUT_PULLUP);
+
+  pinMode(orangeLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(blueLED, OUTPUT);
+  pinMode(colorLED, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+
+  myServo.attach(servoPin);
+  myServo.write(0);
+
+  // all off initially
+  digitalWrite(orangeLED, LOW);
+  digitalWrite(redLED, LOW);
+  digitalWrite(blueLED, LOW);
+  digitalWrite(colorLED, LOW);
+  noTone(buzzer);
+}
+
+long getDistance(int trig, int echo) {
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  long duration = pulseIn(echo, HIGH, 20000);
+  if (duration == 0) return 999;
+  return duration * 0.034 / 2;
+}
+
+void policeSiren(unsigned long duration_ms) {
+  unsigned long start = millis();
+  while (millis() - start < duration_ms) {
+    for (int f = 700; f <= 1100; f += 20) tone(buzzer, f, 10);
+    for (int f = 1100; f >= 700; f -= 20) tone(buzzer, f, 10);
+  }
+  noTone(buzzer);
+}
+
+void policeFlash(unsigned long duration_ms) {
+  unsigned long start = millis();
+  while (millis() - start < duration_ms) {
+    digitalWrite(redLED, HIGH);
+    digitalWrite(blueLED, LOW);
+    delay(100);
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, HIGH);
+    delay(100);
+  }
+  digitalWrite(redLED, LOW);
+  digitalWrite(blueLED, LOW);
+}
+
+void loop() {
+  // Toggle switch
+  if (digitalRead(switchPin) == LOW) {
+    delay(200);
+    systemOn = !systemOn;
+    while (digitalRead(switchPin) == LOW);
+    delay(200);
+  }
+
+  if (!systemOn) {
+    digitalWrite(orangeLED, LOW);
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
+    digitalWrite(colorLED, LOW);
+    noTone(buzzer);
+    myServo.write(0);
+    return;
+  }
+
+  long d1 = getDistance(trig1, echo1);
+  long d2 = getDistance(trig2, echo2);
+
+  Serial.print("D1: "); Serial.print(d1);
+  Serial.print(" | D2: "); Serial.println(d2);
+
+  unsigned long currentTime = millis();
+
+  // Sensor 1
+  if (d1 <= 20 && d1 < d2) {
+    activeSensor = 1;
+    actionEndTime = currentTime + 8000;  // hold for 8 seconds
+  }
+  // Sensor 2
+  else if (d2 <= 15) {
+    activeSensor = 2;
+    actionEndTime = currentTime + 8000;
+  }
+
+  // Run actions if within the 8s window
+  if (currentTime < actionEndTime) {
+    if (activeSensor == 1) {
+      // Sensor 1 active
+      digitalWrite(orangeLED, HIGH);
+      digitalWrite(redLED, LOW);
+      digitalWrite(blueLED, LOW);
+      digitalWrite(colorLED, LOW);
+      tone(buzzer, 1000);
+      myServo.write(45);
+    } 
+    else if (activeSensor == 2) {
+      // Sensor 2 active
+      digitalWrite(orangeLED, LOW);
+      digitalWrite(colorLED, LOW);
+      policeFlash(200);      // red/blue alternating flashes
+      policeSiren(200);      // smooth siren tone
+      myServo.write(70);
+    }
+  } 
+  else {
+    // Nothing detected
+    digitalWrite(orangeLED, LOW);
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
+    digitalWrite(colorLED, HIGH);
+    noTone(buzzer);
+    myServo.write(0);
+  }
+
+  delay(100);
+}
