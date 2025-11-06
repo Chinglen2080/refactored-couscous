@@ -25,7 +25,7 @@ def on_status(status_dict):
     print(status_dict)
 
 def parse_status(line):
-    print("line")
+    print(line)
 
 def main(port='COM3', baudrate=9600):
     ser = serial.Serial(port, baudrate, timeout=1)
