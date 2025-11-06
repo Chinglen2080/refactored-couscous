@@ -1,0 +1,238 @@
+#include <Servo.h>
+
+// Main components
+const int trig1 = 9, echo1 = 8;
+const int trig2 = 7, echo2 = 6;
+const int servoPin = 10;
+const int switchPin = 5;
+
+// Optional components
+const int orangeLED = 4;
+const int redLED = 3;
+const int blueLED = 2;
+const int buzzer = 11;
+const int colorLED = 12;
+
+Servo myServo;
+
+bool systemOn = false;
+unsigned long actionEndTime = 0;
+unsigned long lastSwitchToggle = 0;
+int activeSensor = 0;
+
+unsigned long sirenStartTime = 0;
+unsigned long flashStartTime = 0;
+bool sirenActive = false;
+bool flashActive = false;
+
+unsigned long lastStatusTime = 0;
+
+int lastServoAngle = 0;
+bool lastSirenState = false;
+int lastActiveSensor = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(trig1, OUTPUT);
+  pinMode(echo1, INPUT);
+  pinMode(trig2, OUTPUT);
+  pinMode(echo2, INPUT);
+  pinMode(switchPin, INPUT_PULLUP);
+
+  pinMode(orangeLED, OUTPUT);
+  pinMode(redLED, OUTPUT);
+  pinMode(blueLED, OUTPUT);
+  pinMode(colorLED, OUTPUT);
+  pinMode(buzzer, OUTPUT);
+
+  myServo.attach(servoPin);
+  myServo.write(0);
+
+  digitalWrite(orangeLED, LOW);
+  digitalWrite(redLED, LOW);
+  digitalWrite(blueLED, LOW);
+  digitalWrite(colorLED, LOW);
+  noTone(buzzer);
+}
+
+long getDistance(int trig, int echo) {
+  digitalWrite(trig, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trig, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trig, LOW);
+  long duration = pulseIn(echo, HIGH, 20000);
+  if (duration == 0) return 999;
+  return duration * 0.034 / 2;
+}
+
+void policeSirenUpdate() {
+  if (!sirenActive) return;
+
+  unsigned long now = millis();
+  const int toneDuration = 10;
+  const int freqStart = 700;
+  const int freqEnd = 1100;
+  const int freqStep = 20;
+
+  unsigned long elapsed = now - sirenStartTime;
+  if (elapsed > 200) {
+    noTone(buzzer);
+    sirenActive = false;
+    return;
+  }
+  
+  int cycle = (elapsed / toneDuration) % ((freqEnd - freqStart) * 2 / freqStep);
+  int freq;
+  if (cycle < (freqEnd - freqStart) / freqStep) 
+    freq = freqStart + (cycle * freqStep);
+  else 
+    freq = freqEnd - ((cycle - (freqEnd - freqStart) / freqStep) * freqStep);
+  tone(buzzer, freq, toneDuration);
+}
+
+void policeFlashUpdate() {
+  if (!flashActive) return;
+
+  unsigned long now = millis();
+  if (now - flashStartTime >= 200) {
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
+    flashActive = false;
+    return;
+  }
+
+  unsigned long interval = (now / 50) % 2;
+  if (interval == 0) {
+    digitalWrite(redLED, HIGH);
+    digitalWrite(blueLED, LOW);
+  } else {
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, HIGH);
+  }
+}
+
+void printStatus(long d1, long d2, int servoAngle) {
+  Serial.print("Status | ");
+  Serial.print("D1: "); Serial.print(d1);
+  Serial.print(" cm, D2: "); Serial.print(d2);
+  Serial.print(" cm, Servo: "); Serial.print(servoAngle);
+  Serial.print("°, LEDs [OR: "); Serial.print(digitalRead(orangeLED));
+  Serial.print(", RED: "); Serial.print(digitalRead(redLED));
+  Serial.print(", BLU: "); Serial.print(digitalRead(blueLED));
+  Serial.print(", COL: "); Serial.print(digitalRead(colorLED));
+  Serial.print("], Siren: "); Serial.println(sirenActive ? "ON" : "OFF");
+}
+
+void loop() {
+  if (digitalRead(switchPin) == LOW && (millis() - lastSwitchToggle > 200)) {
+    systemOn = !systemOn;
+    lastSwitchToggle = millis();
+    while (digitalRead(switchPin) == LOW) { delay(10); }
+    Serial.print("System turned ");
+    Serial.println(systemOn ? "ON" : "OFF");
+  }
+
+  if (!systemOn) {
+    digitalWrite(orangeLED, LOW);
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
+    digitalWrite(colorLED, LOW);
+    noTone(buzzer);
+    myServo.write(0);
+    sirenActive = false;
+    flashActive = false;
+
+    if (millis() - lastStatusTime >= 1000) {
+      printStatus(999, 999, 0);
+      lastStatusTime = millis();
+    }
+    lastActiveSensor = 0;
+    lastServoAngle = 0;
+    lastSirenState = false;
+    return;
+  }
+
+  long d1 = getDistance(trig1, echo1);
+  long d2 = getDistance(trig2, echo2);
+  int currentServoAngle = myServo.read();
+  unsigned long currentTime = millis();
+
+  int previousActiveSensor = activeSensor;
+
+  if (d1 <= 20 && d1 < d2) {
+    activeSensor = 1;
+    actionEndTime = currentTime + 8000;
+  } else if (d2 <= 15) {
+    activeSensor = 2;
+    actionEndTime = currentTime + 8000;
+  } else {
+    activeSensor = 0;
+  }
+
+  if (currentTime < actionEndTime && activeSensor != 0) {
+    if (activeSensor == 1) {
+      digitalWrite(orangeLED, HIGH);
+      digitalWrite(redLED, LOW);
+      digitalWrite(blueLED, LOW);
+      digitalWrite(colorLED, LOW);
+      tone(buzzer, 1000);
+      myServo.write(45);
+      sirenActive = false;
+      flashActive = false;
+    } else if (activeSensor == 2) {
+      digitalWrite(orangeLED, LOW);
+      digitalWrite(colorLED, LOW);
+      if (!flashActive) {
+        flashActive = true;
+        flashStartTime = currentTime;
+      }
+      if (!sirenActive) {
+        sirenActive = true;
+        sirenStartTime = currentTime;
+      }
+      policeFlashUpdate();
+      policeSirenUpdate();
+      myServo.write(70);
+    }
+  } else {
+    digitalWrite(orangeLED, LOW);
+    digitalWrite(redLED, LOW);
+    digitalWrite(blueLED, LOW);
+    digitalWrite(colorLED, HIGH);
+    noTone(buzzer);
+    myServo.write(0);
+    sirenActive = false;
+    flashActive = false;
+  }
+
+  if (sirenActive) policeSirenUpdate();
+  if (flashActive) policeFlashUpdate();
+
+  // Print live major event changes
+  if (activeSensor != lastActiveSensor) {
+    if (activeSensor == 1) Serial.println("Event: Sensor 1 detected object");
+    else if (activeSensor == 2) Serial.println("Event: Sensor 2 detected object");
+    else Serial.println("Event: No object detected (Out of range)");
+    lastActiveSensor = activeSensor;
+  }
+
+  if (currentServoAngle != lastServoAngle) {
+    Serial.print("Event: Servo moved to ");
+    Serial.print(currentServoAngle);
+    Serial.println(" degrees");
+    lastServoAngle = currentServoAngle;
+  }
+
+  if (sirenActive != lastSirenState) {
+    Serial.print("Event: Siren ");
+    Serial.println(sirenActive ? "activated" : "deactivated");
+    lastSirenState = sirenActive;
+  }
+
+  // Print regular status every second
+  if (millis() - lastStatusTime >= 1000) {
+    printStatus(d1, d2, currentServoAngle);
+    lastStatusTime = millis();
+  }
+}
