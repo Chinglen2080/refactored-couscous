@@ -2,51 +2,30 @@ import serial
 import time
 
 def on_detect_sensor1():
-    pass  # Blank function for sensor 1 detection event
-
+    with open("logs.txt", "a") as f:
+        f.write(f"Object detected at sensor 1 at {formatted_time}.\n")
+    
 def on_detect_sensor2():
-    pass  # Blank function for sensor 2 detection event
+    with open("logs.txt", "a") as f:
+        f.write(f"Object detected at sensor 2 at {formatted_time}.\n")
 
 def on_out_of_range():
-    pass  # Blank function for no detection event
+    with open("logs.txt", "a") as f:
+        f.write(f"Object out of range at {formatted_time}.\n")
 
 def on_servo_move(angle):
-    pass  # Blank function for servo angle change
+    with open("logs.txt", "a") as f:
+        f.write(f"Servo moved to {angle}° at {formatted_time}.\n")
 
 def on_siren_change(state):
-    pass  # Blank function for siren on/off
+    with open("logs.txt", "a") as f:
+        f.write(f"Siren turned {state} at {formatted_time}.\n")
 
 def on_status(status_dict):
-    pass  # Blank function for periodic status update
+    print(status_dict)
 
 def parse_status(line):
-    # Parse status line of format:
-    # Status | D1: 15 cm, D2: 20 cm, Servo: 45°, LEDs [OR:1, RED:0, BLU:0, COL:0], Siren: ON
-    try:
-        parts = line.split('|')[1].strip()
-        parts_dict = {}
-        segments = parts.split(',')
-        for segment in segments:
-            segment = segment.strip()
-            if segment.startswith("D1:"):
-                parts_dict['d1'] = int(segment.split()[1])
-            elif segment.startswith("D2:"):
-                parts_dict['d2'] = int(segment.split()[1])
-            elif segment.startswith("Servo:"):
-                parts_dict['servo'] = int(segment.split()[1].replace("°", ""))
-            elif segment.startswith("LEDs"):
-                # Extract LED values
-                led_states = segment.split('[')[1].split(']')[0].split(',')
-                led_dict = {}
-                for led_state in led_states:
-                    key, value = led_state.split(':')
-                    led_dict[key.strip()] = int(value.strip())
-                parts_dict['leds'] = led_dict
-            elif segment.startswith("Siren:"):
-                parts_dict['siren'] = segment.split()[1].upper() == 'ON'
-        return parts_dict
-    except Exception:
-        return None
+    print("line")
 
 def main(port='COM3', baudrate=9600):
     ser = serial.Serial(port, baudrate, timeout=1)
@@ -58,6 +37,7 @@ def main(port='COM3', baudrate=9600):
 
     try:
         while True:
+            formatted_time = time.strftime("%Y-%m-%d %H:%M:%S", current_time_struct)
             line = ser.readline().decode('utf-8').strip()
             if not line:
                 continue
